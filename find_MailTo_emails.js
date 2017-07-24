@@ -1,0 +1,1 @@
+javascript:DL=document.links;WN=open('','Z6','width=800,height=400,scrollbars,resizable,menubar');for(JK=0;JK<DL.length;JK++){if(DL.item(JK).protocol=='mailto:'){rr=DL[JK].toString();WN.document.write(rr.substring(7,rr.length)+'<br>')}}
