@@ -1,0 +1,165 @@
+Option Explicit
+ Private Const xlUp As Long = -4162
+
+Sub CopyAllEmailsToExcel()
+ Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, go to Tools > References
+ 'and select the checkboxes preceding the following items (if not already checked):
+ '- "Microsoft Outlook 15.0 Object Library" (Excel 2013 users) or "Microsoft Outloook 14.0 Object Library" (Excel 2010 users)
+ '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
+ Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
+ Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
+ Dim fNameAndPath As Variant, deduperList(), foundEmails()
+ Dim sText As String, OneRange As Range, SortCell As Range
+ Dim a As Long, i As Long, messageCount As Long, LastRow As Long
+ Dim bXStarted As Boolean
+ Dim Regex As Object, olMatches As Object, Match As Object, M As Object
+
+If MsgBox("Before running this macro, make sure:" & vbNewLine & _
+    "1) You have Microsoft VBScript Regular Expressions 5.5 enabled (if unsure, in Excel's top horizontal menu, click " & _
+    "Developer, then click Visual Basic (left-most button under that), then in the Tools menu, select References. " & _
+    "You may add as many checkboxes as you like, but make sure Microsoft VBScript Regular Expressions 5.5 is one of them." & vbNewLine & _
+    "2) You have clicked/highlighted the Outlook subfolder where the desired messages reside that you want to process" & vbNewLine & _
+    "3) you have already created the Excel file on your DESKTOP (or other convenient location) where the data will go" & vbNewLine & _
+    "Note: must be a standard Excel filetype and not .csv because macro will be inserting another worksheet tab in file" & vbNewLine & _
+    "Click OK if all above is true, else click Cancel. Then re-run macro by selecting View --> Macros --> View Macros --> select " & _
+    "'CopyAllMessagesToExcel' macro --> Run.", vbOKCancel) = vbCancel Then Exit Sub
+
+'let user select filename to populate data into -- reduces human error vs. entering a filename
+'per https://www.mrexcel.com/forum/excel-questions/660911-file-filter-allow-xls-xlsx-xlsm-nothing-else.html you do not have to
+fNameAndPath = Application.GetOpenFilename( _
+            FileFilter:="Microsoft Excel Workbooks (*.xls;*.xlsx;*.xlsm),*.xls;*.xlsx;*.xlsm", _
+            Title:="Select destination file to open (double-click or hit Open button to select specific file)", _
+            MultiSelect:=False) 'MultiSelect:=True would allow you to select >1 file but then must treat fNameAndPath like an arrray
+'re:above, see https://stackoverflow.com/questions/25565175/vba-opening-multiple-workbooks-defined-by-the-user-with-filter-restriction
+
+If fNameAndPath = False Then Exit Sub 'end macro if it cannot find the aforementioned existing file
+Workbooks.Open Filename:=fNameAndPath
+ActiveWorkbook.Close savechanges:=False 'close the desired file without saving additional changes
+
+On Error Resume Next
+Set xlApp = GetObject(, "Excel.Application")
+If Err <> 0 Then
+    Application.StatusBar = "Please wait while Excel source is being processed ... "
+    'above is the message that appears at bottom left of screen while macro is running
+    Set xlApp = CreateObject("Excel.Application")
+    bXStarted = True
+End If
+On Error GoTo 0
+
+'Open the workbook to input the data
+Set xlWB = xlApp.Workbooks.Open(fNameAndPath) 'was (strPath)
+Set xlSheet = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count)) 'create a new worksheet tab at end to populate details into
+Set ws = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count)) 'create another tab after that to populate unique emails list into
+     
+Set objOL = Outlook.Application
+Set objFolder = objOL.ActiveExplorer.CurrentFolder
+Set objItems = objFolder.Items
+messageCount = 0 'counter for # of Outlook messages processed
+
+'Some RegEx things you might find useful (this is not an exhaustive list):
+    ' (.*) = any char -- the asterisk means 1 or more
+    ' \s* = spaces & invisible spaces (space chars, tabs, line feeds, etc.)
+    ' \S* = all non-space chars
+    ' \D* = all non-digits
+    ' \w* = match alphanumeric (letter or number)
+    ' \d* = match digits only
+    ' [ \xA0] = zero or more non-breaking (\xA0) or regular spaces
+    ' \/ = regular / slash
+    ' "" = quotation mark (twice to escape)
+    ' \(  = left parenthesis
+    ' [^)]+ = anything not a right parenthesis
+    ' \) = right parenthesis
+Set Regex = CreateObject("VBScript.RegExp")
+'set the regular expression
+Regex.Pattern = "\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b" '\b represents a word boundary, per https://stackoverflow.com/questions/11867580/vba-excel-regex-b-word-boundary-doesnt-match-if-word-is-at-beginning-of-stri
+Regex.IgnoreCase = True
+Regex.MultiLine = True 'no need to set the MultiLine property to anything.  All it does in Javascript (the flavor used in VBA) is allow ^$ to match line breaks
+Regex.Global = True
+
+i = 1 'initialize counter for use below
+For Each olItem In objItems
+    On Error Resume Next 'if an error, it will move to next item/loop
+        sText = olItem.Body 'Outlook item body, is a built-in element
+        'a few replacements below in case \b word boundary is strict:
+        sText = Replace(sText, Chr(23), " ") 'replace quotation marks with spaces so you don't lose results like "v@wx.com"
+        sText = Replace(sText, ",", " ") 'replace commas with spaces so you don't lose results like v@wx.com,x@yz.com
+        sText = Replace(sText, "mailto:", " ") 'replace commas with spaces so you don't lose results like v@wx.com,x@yz.com
+    
+        Set olMatches = Regex.Execute(sText) 'olMatches represents the full results of executing the regex
+        For Each Match In olMatches 'for each match in the set, do the following
+            ReDim Preserve foundEmails(i) 'must re-size the array to match the number of elements in it
+            foundEmails(i) = Match 'populate each match into a new element in the array
+            xlSheet.Cells(i + 1, 1) = foundEmails(i) 'copy that value into the new worksheet
+            xlSheet.Cells(i + 1, 2) = olItem.ReceivedTime 'also copy the message time
+            xlSheet.Cells(i + 1, 3) = olItem.Subject 'and the message subject
+            xlSheet.Cells(i + 1, 4) = olItem.SenderEmailAddress 'and the message sender
+            i = i + 1 'the +1 insures item 2 goes in row 3, etc., since there's a header row to avoid
+        Next
+    messageCount = messageCount + 1 'count how many Outlook messages have been processed
+Next olItem 'end of item, time to loop through next Outlook message (For Each loop)
+
+xlSheet.Range("A1:D" & i).RemoveDuplicates Columns:=Array(1, 2), Header:=xlYes 'remove duplicate rows using columns A & B as criteria
+'see https://msdn.microsoft.com/VBA/Excel-VBA/articles/range-removeduplicates-method-excel for details
+    
+'add column/header row values
+xlSheet.Range("A1") = "Email"
+xlSheet.Range("B1") = "Email Received"
+xlSheet.Range("C1") = "Email from Message Subject"
+xlSheet.Range("D1") = "Email Sender"
+xlSheet.Columns("A:D").ColumnWidth = 30 'then resize columns
+Application.Goto xlSheet.Range(Cells(1, 1), Cells(1, 1)) 'and move cursor to cell A1 when done
+     
+LastRow = xlSheet.Cells(xlSheet.Rows.Count, "A").End(xlUp).Row 'find last row #
+a = 1 'counter for elements in array, starting at item 1
+For i = 2 To LastRow
+    ReDim Preserve deduperList(a) 'must re-size the array to match the number of elements in it
+    deduperList(a) = xlSheet.Cells(i, 1).Value2 'Add each cell value from A2 down (found email) to a value in deduperList array
+    a = a + 1
+Next i
+
+MsgBox ("midpoint check: LastRow=" & LastRow & "; a=" & a & "; deduperList(a)=" & deduperList(a))
+
+LastRow = xlSheet.Cells(xlSheet.Rows.Count, "D").End(xlUp).Row 'find last row #
+For i = 2 To LastRow
+    ReDim Preserve deduperList(a) 'must re-size the array to match the number of elements in it
+    deduperList(a) = xlSheet.Cells(i, 4).Value2 'Add each cell value from D2 down (sender email) to a value in deduperList array
+    a = a + 1
+Next i
+
+'get unique names out of the deduperList
+'below from http://stackoverflow.com/questions/3017852/vba-get-unique-values-from-array
+  Dim arr As New Collection, q
+'Collection.add(item,key) will add a new item only if the key was not already used before
+  On Error Resume Next
+  For Each q In deduperList
+     arr.Add q, q
+  Next
+'arr(0) through arr(arr.Count) now contains all unique emails across columns A & D
+
+MsgBox ("arr(0)=" & arr(0) & " through arr(" & arr.Count & ")=" & arr(arr.Count))
+
+ws.Range("A1").Value2 = "Unique Emails Alpha-Sorted" 'column header
+For i = 0 To arr.Count
+    ws.Range("A" & i + 2).Value2 = arr(i) 'populating each unique email address in column A, one below the other
+Next
+
+'sort emails in alpha order
+    Set OneRange = ws.Range("A:A")
+    Set SortCell = ws.Range("A1")
+    OneRange.Sort Key1:=SortCell, Order1:=xlAscending, Header:=xlYes
+
+     xlWB.Save ' save changes made in file up to this point, then leave it open
+'     xlWB.Close 1 'this line would've closed file, but is purposely commented out
+     If bXStarted Then
+         xlApp.Quit
+     End If
+     Set Match = Nothing: Set olMatches = Nothing: Set Regex = Nothing: Set xlApp = Nothing
+     Set xlWB = Nothing: Set xlSheet = Nothing: Set objItems = Nothing: Set objFolder = Nothing: Set objOL = Nothing
+
+MsgBox ("# of Outlook messages processed in your folder: " & messageCount - 1 & vbNewLine & _
+"Single list of unique emails are now saved to a new last worksheet of your designated Excel file, and " & _
+"details about each email are on the next-to-last worksheet tab.")
+
+Application.StatusBar = "" 'remove the message at bottom left of screen that was displaying while macro was running
+
+End Sub
