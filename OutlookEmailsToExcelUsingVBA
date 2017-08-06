@@ -1,17 +1,19 @@
 Option Explicit
  Private Const xlUp As Long = -4162
 
-Sub CopyAllEmailsToExcel()
- Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, go to Tools > References
+Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name
+ Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, in Excel, go to Tools > References
  'and select the checkboxes preceding the following items (if not already checked):
  '- "Microsoft Outlook 15.0 Object Library" (Excel 2013 users) or "Microsoft Outloook 14.0 Object Library" (Excel 2010 users)
  '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
  Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
  Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
  Dim fNameAndPath As Variant, deduperList(), foundEmails()
- Dim sText As String, OneRange As Range, SortCell As Range
+ 'when you dimension variables, you specify the type after the name: almost all the most common ones like String are here
+ Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells
  Dim a As Long, i As Long, messageCount As Long, LastRow As Long
- Dim bXStarted As Boolean
+ 'Integer is the best type for smaller numbers, but Long is best if you think your variable may become a very large number
+ Dim bXStarted As Boolean 'True or False
  Dim Regex As Object, olMatches As Object, Match As Object, M As Object
 
 If MsgBox("Before running this macro, make sure:" & vbNewLine & _
