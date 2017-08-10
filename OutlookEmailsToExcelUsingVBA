@@ -1,6 +1,7 @@
 Option Explicit
  Private Const xlUp As Long = -4162
-
+'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
+'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
 Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name
  Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, in Excel, go to Tools > References
  'and select the checkboxes preceding the following items (if not already checked):
