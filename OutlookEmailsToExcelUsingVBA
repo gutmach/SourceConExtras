@@ -1,5 +1,5 @@
 Option Explicit
- Private Const xlUp As Long = -4162
+'option explicit forces you to declare variable types; it helps reveal many errors to facilitate debugging
 'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
 'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
 Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name
@@ -13,7 +13,7 @@ Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name
  'when you dimension variables, you specify the type after the name: almost all the most common ones like String are here
  Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells
  Dim a As Long, i As Long, messageCount As Long, LastRow As Long
- 'Integer is the best type for smaller numbers, but Long is best if you think your variable may become a very large number
+ 'As Integer works for smaller numbers, but Long works regardless how large your variable gets, and runs faster, so always use Long!
  Dim bXStarted As Boolean 'True or False
  Dim Regex As Object, olMatches As Object, Match As Object, M As Object
 
