@@ -1,37 +1,41 @@
 Option Explicit
-'above should always be line #1: forces you to declare variable types & often reveals errors to facilitate debugging
+'Lines (or partial lines) preceded by an apostrophe are comments & ignored when code is run.
+'Delete the apostrophe to activate what follows it on that line.
+'Option Explicit should always be macro line #1: forces you to declare variable types & often reveals errors to help debug
 'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
 'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
 
-Sub CopyAllEmailsToExcel() 'what is between Sub and () will be the macro name users will select- no spaces or special chars
+Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name users will select: avoid spaces or special chars
 
 Dim objOL As Outlook.Application 'Create variable to hold new Outlook App
 'Above method is called Early Binding which lets code run much faster: the compiler performs optimizations and allocates
 'memory before an application executes. The only negative is users of this macro need relevant Office libraries pre-loaded.
 'If not loaded, you will get a user type not defined error for this line, in Excel, go to Tools > References
 'and select the checkboxes preceding the following items (if not already checked):
-'- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, 14 for Excel 2010, etc.)
+'- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, xx=14 for Excel 2010, etc.)
 '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
 
-'While a bit slower, if you want to avoid the above issues, then use Late Binding. (If you declare a variable as Object,
-'you are Late binding.) You would un-comment the following code section and comment out the Early Binding version above:
+'While a bit slower, to avoid the above checkbox issues, use Late Binding. (If you declare a variable as Object,
+'you are Late binding.) Just un-comment the following code section and comment out the Early Binding version above:
 'Dim objOL As Object 'Create variable to hold new object
 'Set olApp = CreateObject("Outlook.Application") 'Assign Outlook app to Object
 
+'Above explained well at http://www.automateexcel.com/vba/early-late-binding and
+'https://support.microsoft.com/en-us/help/245115/using-early-binding-and-late-binding-in-automation  
 
-'Above explained well at https://support.microsoft.com/en-us/help/245115/using-early-binding-and-late-binding-in-automation 
-'and http://www.automateexcel.com/vba/early-late-binding''''''
 Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
  'dimensioning variables is assigning their type. Above ones are Outlook-specific, below are some more common ones:
- Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
- Dim fNameAndPath As Variant, deduperList(), foundEmails() 'Variant is default when you don't specify a type
+Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
+Dim fNameAndPath As Variant, deduperList(), foundEmails() 'Variant is default when you don't specify a type
  'but a var name immediately followed by () implies it will be an array
- Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells; String is for text
- Dim a As Long, i As Long, messageCount As Long, LastRow As Long 'Integer works for smaller numbers,
+Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells; String is for text
+Dim a As Long, i As Long, messageCount As Long, LastRow As Long 'Integer works for smaller numbers,
  'but Long works regardless how large your var gets & runs faster than Integer, so always use Long!
- Dim bXStarted As Boolean 'True or False
- Dim Regex As Object, olMatches As Object, Match As Object, M As Object
+Dim bXStarted As Boolean 'True or False
+Dim Regex As Object, olMatches As Object, Match As Object, M As Object
 
+'Notes on below section: MsgBox will display a popup; & joins the preceding and following (like concatenate function in Excel)
+'An underscore _ preceded by a space means treat the next line as a continuation of this line, not a separate line
 If MsgBox("Before running this macro, make sure:" & vbNewLine & _
     "1) You have Microsoft VBScript Regular Expressions 5.5 enabled (if unsure, in Excel's top horizontal menu, click " & _
     "Developer, then click Visual Basic (left-most button under that), then in the Tools menu, select References. " & _
@@ -82,17 +86,16 @@ messageCount = 0 'counter for # of Outlook messages processed
     ' [ \xA0] = zero or more non-breaking (\xA0) or regular spaces
     ' \/ = regular / slash (you need to precede special chars with a backslash to escape them)
     ' "" = quotation mark (twice to escape)
-    ' \(  = left parenthesis
+    ' \(  = left parenthesis; \) = right parenthesis
     ' [^)]+ = anything not a right parenthesis
-    ' \) = right parenthesis
-Set Regex = CreateObject("VBScript.RegExp")
-'set the regular expression
-Regex.Pattern = "\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b" '\b represents a word boundary, per https://stackoverflow.com/questions/11867580/vba-excel-regex-b-word-boundary-doesnt-match-if-word-is-at-beginning-of-stri
-Regex.IgnoreCase = True
-Regex.MultiLine = True 'no need to set the MultiLine property to anything.  All it does in Javascript (the flavor used in VBA) is allow ^$ to match line breaks
-Regex.Global = True
 
-i = 1 'initialize counter for use below
+Set Regex = CreateObject("VBScript.RegExp") 'set the regular expression and its parameters
+Regex.Pattern = "\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b" '\b represents a word boundary, per https://stackoverflow.com/questions/11867580/vba-excel-regex-b-word-boundary-doesnt-match-if-word-is-at-beginning-of-stri
+Regex.IgnoreCase = True 'treat lowercase, uppercase or mixed case instances as matches
+Regex.MultiLine = True 'no need to set the MultiLine property to anything.  All it does in Javascript (the flavor used in VBA) is allow ^$ to match line breaks
+Regex.Global = True 'act on ALL instances; False would mean stop after first match
+
+i = 1 'initialize loop counter for use below
 For Each olItem In objItems
     On Error Resume Next 'if an error, it will move to next item/loop
         sText = olItem.Body 'Outlook item body, is a built-in element
