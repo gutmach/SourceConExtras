@@ -2,10 +2,10 @@ Option Explicit
 'option explicit forces you to declare variable types; it helps reveal many errors to facilitate debugging
 'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
 'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
-Sub CopyAllEmailsToExcel() 'what is between Sub and () is the macro name
+Sub CopyAllEmailsToExcel() 'what is between Sub and () will be the macro name users will select- no spaces or special chars
  Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, in Excel, go to Tools > References
  'and select the checkboxes preceding the following items (if not already checked):
- '- "Microsoft Outlook 15.0 Object Library" (Excel 2013 users) or "Microsoft Outloook 14.0 Object Library" (Excel 2010 users)
+ '- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, 14 for Excel 2010, etc.)
  '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
  Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
  Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
