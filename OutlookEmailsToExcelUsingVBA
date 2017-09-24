@@ -2,12 +2,26 @@ Option Explicit
 'above should always be line #1: forces you to declare variable types & often reveals errors to facilitate debugging
 'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
 'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
+
 Sub CopyAllEmailsToExcel() 'what is between Sub and () will be the macro name users will select- no spaces or special chars
- Dim objOL As Outlook.Application 'if you get a user type not defined error for this line, in Excel, go to Tools > References
- 'and select the checkboxes preceding the following items (if not already checked):
- '- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, 14 for Excel 2010, etc.)
- '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
- Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
+
+Dim objOL As Outlook.Application 'Create variable to hold new Outlook App
+'Above method is called Early Binding which lets code run much faster: the compiler performs optimizations and allocates
+'memory before an application executes. The only negative is users of this macro need relevant Office libraries pre-loaded.
+'If not loaded, you will get a user type not defined error for this line, in Excel, go to Tools > References
+'and select the checkboxes preceding the following items (if not already checked):
+'- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, 14 for Excel 2010, etc.)
+'- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
+
+'While a bit slower, if you want to avoid the above issues, then use Late Binding. (If you declare a variable as Object,
+'you are Late binding.) You would un-comment the following code section and comment out the Early Binding version above:
+'Dim objOL As Object 'Create variable to hold new object
+'Set olApp = CreateObject("Outlook.Application") 'Assign Outlook app to Object
+
+
+'Above explained well at https://support.microsoft.com/en-us/help/245115/using-early-binding-and-late-binding-in-automation 
+'and http://www.automateexcel.com/vba/early-late-binding''''''
+Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
  'dimensioning variables is assigning their type. Above ones are Outlook-specific, below are some more common ones:
  Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
  Dim fNameAndPath As Variant, deduperList(), foundEmails() 'Variant is default when you don't specify a type
@@ -29,7 +43,7 @@ If MsgBox("Before running this macro, make sure:" & vbNewLine & _
     "'CopyAllMessagesToExcel' macro --> Run.", vbOKCancel) = vbCancel Then Exit Sub
 
 'let user select filename to populate data into -- reduces human error vs. entering a filename
-'per https://www.mrexcel.com/forum/excel-questions/660911-file-filter-allow-xls-xlsx-xlsm-nothing-else.html you do not have to
+'per https://www.mrexcel.com/forum/excel-questions/660911-file-filter-allow-xls-xlsx-xlsm-nothing-else.html 
 fNameAndPath = Application.GetOpenFilename( _
             FileFilter:="Microsoft Excel Workbooks (*.xls;*.xlsx;*.xlsm),*.xls;*.xlsx;*.xlsm", _
             Title:="Select destination file to open (double-click or hit Open button to select specific file)", _
