@@ -1,5 +1,5 @@
 Option Explicit
-'option explicit forces you to declare variable types; it helps reveal many errors to facilitate debugging
+'above should always be line #1: forces you to declare variable types & often reveals errors to facilitate debugging
 'see https://www.eremedia.com/sourcecon/how-to-learn-programming-for-sourcers-part-2-excel-vbas-outlook-folders-emails-lifter/
 'for additional instructions on how to load this into your Microsoft Excel and why this script is useful to talent sourcers
 Sub CopyAllEmailsToExcel() 'what is between Sub and () will be the macro name users will select- no spaces or special chars
@@ -8,12 +8,13 @@ Sub CopyAllEmailsToExcel() 'what is between Sub and () will be the macro name us
  '- "Microsoft Outlook xx.0 Object Library" (where xx=15 for Excel 2013 users, 14 for Excel 2010, etc.)
  '- "Microsoft VBScript Regular Expression 5.5" (you need this one regardless of error, as RegEx is needed to run this)
  Dim objItems As Outlook.Items, objFolder As Outlook.MAPIFolder, olItem As Outlook.MailItem
+ 'dimensioning variables is assigning their type. Above ones are Outlook-specific, below are some more common ones:
  Dim xlApp As Object, xlWB As Object, xlSheet As Object, ws As Worksheet
- Dim fNameAndPath As Variant, deduperList(), foundEmails()
- 'when you dimension variables, you specify the type after the name: almost all the most common ones like String are here
- Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells
- Dim a As Long, i As Long, messageCount As Long, LastRow As Long
- 'As Integer works for smaller numbers, but Long works regardless how large your variable gets, and runs faster, so always use Long!
+ Dim fNameAndPath As Variant, deduperList(), foundEmails() 'Variant is default when you don't specify a type
+ 'but a var name immediately followed by () implies it will be an array
+ Dim sText As String, OneRange As Range, SortCell As Range 'Range refers to a span of one or more cells; String is for text
+ Dim a As Long, i As Long, messageCount As Long, LastRow As Long 'Integer works for smaller numbers,
+ 'but Long works regardless how large your var gets & runs faster than Integer, so always use Long!
  Dim bXStarted As Boolean 'True or False
  Dim Regex As Object, olMatches As Object, Match As Object, M As Object
 
@@ -52,7 +53,7 @@ On Error GoTo 0
 'Open the workbook to input the data
 Set xlWB = xlApp.Workbooks.Open(fNameAndPath) 'was (strPath)
 Set xlSheet = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count)) 'create a new worksheet tab at end to populate details into
-Set ws = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count)) 'create another tab after that to populate unique emails list into
+Set ws = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count)) 'create another tab after it to populate unique emails list into
      
 Set objOL = Outlook.Application
 Set objFolder = objOL.ActiveExplorer.CurrentFolder
@@ -62,12 +63,10 @@ messageCount = 0 'counter for # of Outlook messages processed
 'Some RegEx things you might find useful (this is not an exhaustive list):
     ' (.*) = any char -- the asterisk means 1 or more
     ' \s* = spaces & invisible spaces (space chars, tabs, line feeds, etc.)
-    ' \S* = all non-space chars
-    ' \D* = all non-digits
-    ' \w* = match alphanumeric (letter or number)
-    ' \d* = match digits only
+    ' \S* = all non-space chars; \D* = all non-digits
+    ' \w* = match alphanumeric (letter or number); \d* = match digits only
     ' [ \xA0] = zero or more non-breaking (\xA0) or regular spaces
-    ' \/ = regular / slash
+    ' \/ = regular / slash (you need to precede special chars with a backslash to escape them)
     ' "" = quotation mark (twice to escape)
     ' \(  = left parenthesis
     ' [^)]+ = anything not a right parenthesis
