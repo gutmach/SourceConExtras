@@ -11,9 +11,28 @@ P.S. You may find this earlier step-by-step presentation I did at SourceCon Denv
 <!--
 <br/>
 
+To add a blank space in a README.md file, you can use HTML markup or Markdown syntax. Here are a few ways to achieve this:
+
+1. Using HTML:
+Insert the following HTML code to create a blank space:
+<br/>
+
+2. Using Markdown:
+Markdown syntax provides a way to insert a blank line between two lines of text. You can simply add an empty line to create a blank space:
+
+Line 1
+
+Line 2
+
 Alternatively, you can use two or more empty spaces at the end of a line to force a line break:
 Line 1  
 Line 2
+
+3. Using HTML comments
+
+Another approach is to use HTML comments to create a blank space. This method is useful if you want to add a larger empty space. Here's an example:
+
+<!--
 
 This is a blank space.
 You can add multiple empty lines or text here.
